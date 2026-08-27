@@ -8,7 +8,7 @@ SOURCE FOLDER(S):
 gamebridge_v1.1
 
 FILES:
-34
+33
 
 STRUCTURE:
 
@@ -56,26 +56,8 @@ gamebridge_v1.1/
 ├── plugins/
 │   └── notepad_plugin/
 │       └── main_adapter.py
-├── providers/
-│   └── tavily_provider.py
-└── requirements.txt
-
-==================================================
-FILE: requirements.txt
-TYPE: Text
-==================================================
-
-```
-customtkinter==6.0.0
-keyboard==0.13.5
-ollama==0.6.2
-Pillow==12.3.0
-pyautogui==0.9.54
-pyttsx3==2.99
-speechrecognition==3.17.0
-tkinterweb==4.25.3
-
-```
+└── providers/
+    └── tavily_provider.py
 
 ==================================================
 FILE: adapters/adapter_loader.py
@@ -796,72 +778,206 @@ import os
 import urllib.request
 import urllib.error
 
+
 class OllamaClient:
-    def __init__(self, model_name: str = "sailwind-pilot", base_url: str = "http://localhost:11434"):
+    def __init__(
+        self,
+        model_name: str = "None",
+        base_url: str = "http://localhost:11434",
+    ):
         self.model_name = model_name
         self.base_url = base_url
         self.api_url = f"{base_url}/api/generate"
         self.show_url = f"{base_url}/api/show"
-        
+
     def check_model_status(self) -> str:
-        """Queries the local Ollama instance to track current model availability states."""
+        """
+        Queries the local Ollama instance to track current model
+        availability state.
+
+        "None" is an explicit disabled state and must never be sent
+        to Ollama as a model name.
+        """
+
+        if not self.model_name or self.model_name == "None":
+            return "DISABLED"
+
         payload = {"name": self.model_name}
+
         try:
             data = json.dumps(payload).encode("utf-8")
-            req = urllib.request.Request(self.show_url, data=data, headers={"Content-Type": "application/json"}, method="POST")
+
+            req = urllib.request.Request(
+                self.show_url,
+                data=data,
+                headers={
+                    "Content-Type": "application/json"
+                },
+                method="POST",
+            )
+
             with urllib.request.urlopen(req, timeout=3) as response:
                 if response.status == 200:
                     return "READY"
+
         except urllib.error.URLError:
             return "OFFLINE"
+
         except Exception:
             return "LOADING"
+
         return "OFFLINE"
-        
-    def _load_adapter_system_prompt(self, adapter_folder: str) -> str:
-        """Reads the extension's system_prompt.txt dynamically from disk using relative paths."""
+
+    def _load_adapter_system_prompt(
+        self,
+        adapter_folder: str,
+    ) -> str:
+        """
+        Reads the extension's system_prompt.txt dynamically from disk
+        using relative paths.
+        """
+
         if not adapter_folder or adapter_folder == "None":
-            return "You are the G.A.M.E. B.R.I.D.G.E. AI framework. No extension target is currently active."
-            
-        prompt_path = os.path.join("plugins", adapter_folder, "system_prompt.txt")
-        if os.path.exists(prompt_path):
-            try:
-                with open(prompt_path, "r", encoding="utf-8") as f:
-                    return f.read().strip()
-            except Exception as e:
-                print(f"[AI-ERROR] Failed to load local system prompt vector from '{prompt_path}': {e}")
-                
-        return "You are an AI integrated via G.A.M.E. B.R.I.D.G.E. Act as a generalized runtime assistant."
+            return (
+                "You are the G.A.M.E. B.R.I.D.G.E. AI framework. "
+                "No extension target is currently active."
+            )
 
-    def generate_response(self, context: dict, adapter_folder: str = "None") -> str:
-        """Evaluates token contexts across Channel 1 and Channel 2 dispatch guidelines with forced JSON boundaries."""
-        user_input = context.get("user_input", "")
-        telemetry = context.get("telemetry_data", {})
-        capabilities = context.get("capabilities", {})
-        
-        base_system_prompt = self._load_adapter_system_prompt(adapter_folder)
-        k1_chat = context.get("channel1_chat_active", False)
-        k2_adapter = context.get("channel2_adapter_active", False)
-        
-        channel_instructions = "\n\n[ACTIVE INTERACTION PROFILE STATE]\n"
-        if k1_chat and k2_adapter:
-            channel_instructions += "Channel 1 (Dialogue Chat) and Channel 2 (Target App Adapter) are active. Engage in human dialogue and execute requested environmental interactions concurrently. You MUST return your answer inside a valid JSON object structure."
-        elif k1_chat and not k2_adapter:
-            channel_instructions += "Channel 1 (Dialogue Chat) is active. Channel 2 (Target App Adapter) is locked. Pure conversational dialogue state. Do not emit machine execution codes or interface modifications."
-        elif not k1_chat and k2_adapter:
-            channel_instructions += "Channel 1 (Dialogue Chat) is locked. Channel 2 (Target App Adapter) is active. Focus entirely on automated app interactions. Respond with short, raw execution payload text decisions only."
-        else:
-            channel_instructions += "All routing vectors suspended."
-
-        full_system_prompt = (
-            f"{base_system_prompt}{channel_instructions}\n\n"
-            f"Available extension capabilities matrix:\n{json.dumps(capabilities, indent=2)}\n\n"
-            f"Active telemetry data streams from destination context:\n{json.dumps(telemetry, indent=2)}"
+        prompt_path = os.path.join(
+            "plugins",
+            adapter_folder,
+            "system_prompt.txt",
         )
 
-        # Enforce highly deterministic responses when adapter manipulation is active
-        target_temp = 0.1 if k2_adapter else 0.3
-        
+        if os.path.exists(prompt_path):
+            try:
+                with open(
+                    prompt_path,
+                    "r",
+                    encoding="utf-8",
+                ) as f:
+                    return f.read().strip()
+
+            except Exception as e:
+                print(
+                    "[AI-ERROR] Failed to load local system "
+                    f"prompt vector from '{prompt_path}': {e}"
+                )
+
+        return (
+            "You are an AI integrated via G.A.M.E. B.R.I.D.G.E. "
+            "Act as a generalized runtime assistant."
+        )
+
+    def generate_response(
+        self,
+        context: dict,
+        adapter_folder: str = "None",
+    ) -> str:
+        """
+        Evaluates token contexts across Channel 1 and Channel 2
+        dispatch guidelines with forced JSON boundaries.
+
+        If no Ollama model is selected, no request is sent to Ollama.
+        """
+
+        # ----------------------------------------------------------
+        # MODEL GATE
+        # ----------------------------------------------------------
+        # "None" is a legitimate state, not an Ollama model.
+        # Do not construct or send an API request in this state.
+        # ----------------------------------------------------------
+
+        if not self.model_name or self.model_name == "None":
+            return "[AI-DISABLED] No Ollama model selected."
+
+        user_input = context.get(
+            "user_input",
+            "",
+        )
+
+        telemetry = context.get(
+            "telemetry_data",
+            {},
+        )
+
+        capabilities = context.get(
+            "capabilities",
+            {},
+        )
+
+        base_system_prompt = self._load_adapter_system_prompt(
+            adapter_folder
+        )
+
+        k1_chat = context.get(
+            "channel1_chat_active",
+            False,
+        )
+
+        k2_adapter = context.get(
+            "channel2_adapter_active",
+            False,
+        )
+
+        channel_instructions = (
+            "\n\n[ACTIVE INTERACTION PROFILE STATE]\n"
+        )
+
+        if k1_chat and k2_adapter:
+
+            channel_instructions += (
+                "Channel 1 (Dialogue Chat) and Channel 2 "
+                "(Target App Adapter) are active. "
+                "Engage in human dialogue and execute requested "
+                "environmental interactions concurrently. "
+                "You MUST return your answer inside a valid "
+                "JSON object structure."
+            )
+
+        elif k1_chat and not k2_adapter:
+
+            channel_instructions += (
+                "Channel 1 (Dialogue Chat) is active. "
+                "Channel 2 (Target App Adapter) is locked. "
+                "Pure conversational dialogue state. "
+                "Do not emit machine execution codes or "
+                "interface modifications."
+            )
+
+        elif not k1_chat and k2_adapter:
+
+            channel_instructions += (
+                "Channel 1 (Dialogue Chat) is locked. "
+                "Channel 2 (Target App Adapter) is active. "
+                "Focus entirely on automated app interactions. "
+                "Respond with short, raw execution payload "
+                "text decisions only."
+            )
+
+        else:
+
+            channel_instructions += (
+                "All routing vectors suspended."
+            )
+
+        full_system_prompt = (
+            f"{base_system_prompt}"
+            f"{channel_instructions}\n\n"
+            f"Available extension capabilities matrix:\n"
+            f"{json.dumps(capabilities, indent=2)}\n\n"
+            f"Active telemetry data streams from destination context:\n"
+            f"{json.dumps(telemetry, indent=2)}"
+        )
+
+        # Enforce highly deterministic responses when adapter
+        # manipulation is active.
+        target_temp = (
+            0.1
+            if k2_adapter
+            else 0.3
+        )
+
         payload = {
             "model": self.model_name,
             "prompt": user_input,
@@ -869,26 +985,66 @@ class OllamaClient:
             "stream": False,
             "options": {
                 "temperature": target_temp
-            }
+            },
         }
-        
-        # Hardcoded grammar barrier lock via Ollama native API parameter
+
+        # Hardcoded grammar barrier lock via Ollama native API parameter.
         if k2_adapter:
             payload["format"] = "json"
-        
-        try:
-            data = json.dumps(payload).encode("utf-8")
-            req = urllib.request.Request(self.api_url, data=data, headers={"Content-Type": "application/json"}, method="POST")
-            with urllib.request.urlopen(req, timeout=90) as response:
-                response_data = json.loads(response.read().decode("utf-8"))
-                return response_data.get("response", "").strip()
-        except urllib.error.URLError as e:
-            print(f"[AI-API-ERROR] Communications block failed to resolve Ollama loopback endpoint: {e}")
-            return "[AI-API-ERROR] Local Ollama instances are currently unresponsive."
-        except Exception as e:
-            print(f"[AI-API-ERROR] Critical execution exception: {e}")
-            return "[AI-API-ERROR] Internal system AI client exception."
 
+        try:
+
+            data = json.dumps(
+                payload
+            ).encode("utf-8")
+
+            req = urllib.request.Request(
+                self.api_url,
+                data=data,
+                headers={
+                    "Content-Type": "application/json"
+                },
+                method="POST",
+            )
+
+            with urllib.request.urlopen(
+                req,
+                timeout=90,
+            ) as response:
+
+                response_data = json.loads(
+                    response.read().decode("utf-8")
+                )
+
+                return response_data.get(
+                    "response",
+                    "",
+                ).strip()
+
+        except urllib.error.URLError as e:
+
+            print(
+                "[AI-API-ERROR] Communications block failed "
+                "to resolve Ollama loopback endpoint: "
+                f"{e}"
+            )
+
+            return (
+                "[AI-API-ERROR] Local Ollama instances "
+                "are currently unresponsive."
+            )
+
+        except Exception as e:
+
+            print(
+                "[AI-API-ERROR] Critical execution exception: "
+                f"{e}"
+            )
+
+            return (
+                "[AI-API-ERROR] Internal system AI client "
+                "exception."
+            )
 
 ```
 
@@ -1469,6 +1625,7 @@ TYPE: Kod
 
 ```python
 ﻿# -*- coding: utf-8 -*-
+
 """
 CONNECTIONS:
 - FETCHES FROM: ai/ollama_client.py
@@ -1479,47 +1636,97 @@ import threading
 import time
 import ollama
 
+
 class ModelMonitorCore:
     def __init__(self):
         self._lock = threading.Lock()
 
     def fetch_installed_models(self) -> list:
-        """Queries local runtime environments to catalog current model inventory states."""
+        """Returns the locally installed Ollama models with None as the neutral selection."""
         try:
             model_list_data = ollama.list()
-            return [m['model'] for m in model_list_data.get('models', [])]
-        except Exception:
-            return [] # RENSAT: Ingen hårdkodad modell fejkmasoreras vid anropsfel
 
-    def start_lamp_monitor(self, core_hub_callback, update_lamp_ui_callback, get_switch_state_callback) -> None:
-        """Spawns a specialized thread loop monitoring Ollama model availability matrix indexes."""
+            models = [
+                model["model"]
+                for model in model_list_data.get("models", [])
+                if model.get("model")
+            ]
+
+            return ["None"] + models
+
+        except Exception:
+            # Even if Ollama is unavailable, the GUI must still
+            # provide a valid neutral model state.
+            return ["None"]
+
+    def start_lamp_monitor(
+        self,
+        core_hub_callback,
+        update_lamp_ui_callback,
+        get_switch_state_callback,
+    ) -> None:
+        """Monitors the currently selected Ollama model."""
+
         def worker():
             while True:
-                # MINIMAL FIX: Kontrollera om core fortfarande körs, annars avsluta tråden kontrollerat
                 current_core = core_hub_callback()
-                if current_core and hasattr(current_core, 'running') and not current_core.running:
+
+                if (
+                    current_core
+                    and hasattr(current_core, "running")
+                    and not current_core.running
+                ):
                     break
 
                 try:
                     if get_switch_state_callback() == 0:
-                        update_lamp_ui_callback("#9CA3AF") # Standard Gray (OFF State)
+                        update_lamp_ui_callback("#9CA3AF")
                         time.sleep(1)
                         continue
 
                     core = core_hub_callback()
-                    if core and hasattr(core, 'ai_client'):
-                        status = core.ai_client.check_model_status()
-                        if status == "READY":
-                            update_lamp_ui_callback("#10B981") # Green
-                        elif status == "LOADING":
-                            update_lamp_ui_callback("#F59E0B") # Yellow
-                        else:
-                            update_lamp_ui_callback("#EF4444") # Red
+
+                    if not core or not hasattr(core, "ai_client"):
+                        update_lamp_ui_callback("#9CA3AF")
+                        time.sleep(3)
+                        continue
+
+                    selected_model = getattr(
+                        core.ai_client,
+                        "model_name",
+                        "None",
+                    )
+
+                    # Neutral state:
+                    # No model selected means there is nothing to monitor.
+                    if (
+                        not selected_model
+                        or str(selected_model).strip().lower() == "none"
+                    ):
+                        update_lamp_ui_callback("#9CA3AF")
+                        time.sleep(3)
+                        continue
+
+                    status = core.ai_client.check_model_status()
+
+                    if status == "READY":
+                        update_lamp_ui_callback("#10B981")
+
+                    elif status == "LOADING":
+                        update_lamp_ui_callback("#F59E0B")
+
+                    else:
+                        update_lamp_ui_callback("#EF4444")
+
                 except Exception:
-                    break # Safe thread exit if interface structures tear down at closure
+                    break
+
                 time.sleep(3)
 
-        threading.Thread(target=worker, daemon=True).start()
+        threading.Thread(
+            target=worker,
+            daemon=True,
+        ).start()
 
 ```
 
@@ -2029,7 +2236,7 @@ class GameBridgeCore:
         self.ai_client = OllamaClient(
             model_name=self.global_config.get(
                 "ai_model_name",
-                "sailwind-pilot"
+                "None"
             )
         )
 
@@ -4582,7 +4789,7 @@ class GameBridgeGUI(ctk.CTk):
 
             saved_model = self.core_hub.global_config.get(
                 "ai_model_name",
-                "sailwind-pilot",
+                "none",
             )
 
             if saved_model in self.model_selector.cget(

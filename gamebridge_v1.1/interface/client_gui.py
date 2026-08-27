@@ -763,7 +763,7 @@ class GameBridgeGUI(ctk.CTk):
 
             saved_model = self.core_hub.global_config.get(
                 "ai_model_name",
-                "sailwind-pilot",
+                "none",
             )
 
             if saved_model in self.model_selector.cget(

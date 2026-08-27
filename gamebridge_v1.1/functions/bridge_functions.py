@@ -161,7 +161,7 @@ class GameBridgeCore:
         self.ai_client = OllamaClient(
             model_name=self.global_config.get(
                 "ai_model_name",
-                "sailwind-pilot"
+                "None"
             )
         )
 
