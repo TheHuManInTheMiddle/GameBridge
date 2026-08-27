@@ -7,6 +7,12 @@ This project is licensed under the MIT License - see below for details:
 ```text
 Copyright (c) 2026 TheHuManInTheMiddle
 
+# G.A.M.E. B.R.I.D.G.E.
+
+**Generalized Asynchronous Modular Extension / Bidirectional Runtime Interaction Dialogue Guidance Environment**
+
+**An open integration layer for AI ↔ application interaction.**
+
 ## 🚀 Download GameBridge v1.1.0
 
 **Windows standalone — no Python installation required**
