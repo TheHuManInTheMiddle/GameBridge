@@ -86,6 +86,12 @@ class GameBridgeGUI(ctk.CTk):
     def on_ai_toggle(self):
         function_on_ai_toggle(self)
 
+        ai_active = self.ai_toggle_switch.get() == 1
+
+        self.model_selector.configure(
+            state="disabled" if ai_active else "normal"
+        )
+
     def on_internet_toggle(self):
         function_on_internet_toggle(self)
 

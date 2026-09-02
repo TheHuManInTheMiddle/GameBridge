@@ -8,6 +8,7 @@ CONNECTIONS:
 import threading
 import time
 
+
 class TelemetryCore:
     def __init__(self, io_layer=None):
         self.io_layer = io_layer
@@ -20,6 +21,30 @@ class TelemetryCore:
         with self._lock:
             self.loop_active = active
             print(f"[TELEMETRY-CORE] Polling background thread status altered to: {active}")
+
+    def pause(self) -> None:
+        """Pauses telemetry polling without terminating the background worker."""
+        self.set_loop_state(False)
+        print("[TELEMETRY-CORE] Telemetry polling paused.")
+
+    def resume(self) -> None:
+        """Resumes telemetry polling without creating a new worker."""
+        with self._lock:
+            if not self.running:
+                print("[TELEMETRY-CORE] Resume request ignored: telemetry worker is terminated.")
+                return
+
+            self.loop_active = True
+            print("[TELEMETRY-CORE] Telemetry polling resumed.")
+
+    def status(self) -> dict:
+        """Returns the current telemetry lifecycle state without modifying it."""
+        with self._lock:
+            return {
+                "running": self.running,
+                "loop_active": self.loop_active,
+                "state": "ACTIVE" if self.loop_active else "PAUSED"
+            }
 
     def start_polling_worker(self, current_adapter_callback, success_ui_callback) -> None:
         """Spawns an isolated thread sequence monitoring active context mutations asynchronously."""

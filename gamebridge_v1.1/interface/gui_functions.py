@@ -34,6 +34,7 @@ def function_on_internet_toggle(gui_instance):
     """Handles the transactional state swap for the Internet AI capability block."""
     function_sync_matrix_to_core(gui_instance)
 
+
 def function_sync_matrix_to_core(gui_instance):
     """Transactionally pushes localized switch values directly into the core matrix module."""
     if not gui_instance.matrix:
@@ -54,7 +55,14 @@ def function_sync_matrix_to_core(gui_instance):
 
 
 def function_on_telemetry_toggle(gui_instance):
-    """Triggers the decoupled TelemetryCore worker loop based on widget state context and forces matrix sync."""
+    """
+    Controls the already-existing TelemetryCore worker through
+    pause/resume state transitions.
+
+    Worker creation and thread lifecycle belong exclusively to main.py.
+    The GUI switch is therefore a soft-reset control and must never
+    create another polling worker.
+    """
     if (
         not gui_instance.core_hub
         or not hasattr(gui_instance.core_hub, "telemetry_worker")
@@ -64,30 +72,22 @@ def function_on_telemetry_toggle(gui_instance):
     worker = gui_instance.core_hub.telemetry_worker
 
     if gui_instance.read_telemetry_switch.get() == 1:
-        # Systemisk injektion: Om arbetartråden aldrig startats, plugga in våra callbacks nu
-        if not worker.loop_active:
+        # Telemetry worker is created and started exactly once by main.py.
+        # GUI only releases the existing worker from its paused state.
+        worker.resume()
 
-            def get_active_adapter():
-                return getattr(gui_instance.core_hub, "active_adapter_instance", None)
-
-            def telemetry_success_callback(data):
-                if hasattr(gui_instance, "chat_window"):
-                    gui_instance.chat_window.append_monitor_message(str(data))
-
-            worker.start_polling_worker(
-                current_adapter_callback=get_active_adapter,
-                success_ui_callback=telemetry_success_callback,
-            )
-
-        worker.set_loop_state(True)
         log_text = (
             gui_instance.localizer.get_text("log_tel_on")
             if gui_instance.localizer
             else "Telemetry ON"
         )
         gui_instance.append_log("I/O-SIGNAL", log_text)
+
     else:
-        worker.set_loop_state(False)
+        # Soft pause only.
+        # The worker thread remains alive and is resumed by the next ON event.
+        worker.pause()
+
         log_text = (
             gui_instance.localizer.get_text("log_tel_off")
             if gui_instance.localizer

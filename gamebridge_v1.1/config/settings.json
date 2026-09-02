@@ -1,4 +1,4 @@
 {
-    "ai_model_name": "sailwind-pilot:latest",
+    "ai_model_name": "mistral-nemo-gamebridge:latest",
     "voice_hotkey": "f12"
 }

@@ -9,6 +9,8 @@ ANSVAR:
  - Kontrollera capabilities och channel-matrix.
  - Avgöra om extern internetåtkomst ska användas.
  - Läsa denied_search_phrases från extern config.
+ - Separera mänsklig chat-output från Channel 2:s maskinpayload.
+ - Channel 2-action ska inte läcka till Channel 1.
  - Behålla övrig routinglogik oförändrad.
 """
 
@@ -92,7 +94,10 @@ def function_pipeline_worker(
     ui_status_callback,
     speech_callback
 ):
-    """Manages token evaluation and execution matrix channels concurrently with capability checks."""
+    """
+    Manages token evaluation and execution matrix channels
+    concurrently with capability checks.
+    """
 
     try:
         ui_status_callback("PROCESSING")
@@ -101,11 +106,10 @@ def function_pipeline_worker(
         capabilities = {}
 
         if active_adapter:
-            # REN FIX: Prioritera adapterns egna read_telemetry()
+
+            # REN FIX:
+            # Prioritera adapterns egna read_telemetry()
             # för kanal-2 data.
-            #
-            # Inga hårda strängar eller filter – vi bara styr
-            # om datakällan rätt.
             if hasattr(
                 active_adapter,
                 "read_telemetry"
@@ -125,6 +129,7 @@ def function_pipeline_worker(
         # EXPANSION v3.0:
         # Check if the current operational intent requires
         # Internet AI capability.
+
         requires_internet = capabilities.get(
             "requires_external_ai",
             False
@@ -132,11 +137,14 @@ def function_pipeline_worker(
 
         # Hard capability block enforcement evaluated
         # atomically through ChannelMatrix.
+
         if (
             router_instance.matrix
             and router_instance.matrix.is_internet_blocked()
         ):
+
             if requires_internet:
+
                 gui_log_callback(
                     "AI-BRIDGE (WARNING)",
                     "Operation blocked: Target requires "
@@ -171,6 +179,7 @@ def function_pipeline_worker(
             router_instance.matrix
             and router_instance.matrix.is_ai_blocked()
         ):
+
             gui_log_callback(
                 "AI-BRIDGE (INFO)",
                 "AI generation blocked: "
@@ -183,13 +192,6 @@ def function_pipeline_worker(
         # =========================================================================
         # EXPANSION v3.5:
         # INTELLIGENT SÖKFILTER
-        #
-        # denied_search_phrases ligger nu externt i:
-        #
-        #     config/denied_search_phrases.json
-        #
-        # Detta gör att användaren kan lägga till eller ta bort
-        # fraser utan att ändra Python-koden eller bygga om GameBridge.
         # =========================================================================
 
         cleaned_input = (
@@ -204,7 +206,8 @@ def function_pipeline_worker(
         )
 
         # Vi avgör om texten faktiskt är en informationssökning
-        # eller bara en vanlig konversation.
+        # eller bara vanlig konversation.
+
         is_chat_only = (
             cleaned_input in denied_search_phrases
             or (
@@ -215,11 +218,13 @@ def function_pipeline_worker(
 
         # Välj transport-pipeline baserat på matrisens tillstånd
         # OCH sökfiltret.
+
         if (
             router_instance.matrix
             and not router_instance.matrix.is_internet_blocked()
             and not is_chat_only
         ):
+
             gui_log_callback(
                 "AI-BRIDGE (STATUS)",
                 "Evaluating cognitive tokens via "
@@ -235,8 +240,10 @@ def function_pipeline_worker(
             )
 
         else:
+
             # Om Internet AI är avstängt, ELLER om användaren
-            # bara skrev ett stoppord som "hej", kör lokalt!
+            # bara skrev ett stoppord som "hej", kör lokalt.
+
             gui_log_callback(
                 "AI-BRIDGE (STATUS)",
                 "Evaluating cognitive tokens via "
@@ -250,6 +257,7 @@ def function_pipeline_worker(
                     "generate_response"
                 )
             ):
+
                 ai_decision = (
                     router_instance.ai_client
                     .generate_response(
@@ -259,72 +267,167 @@ def function_pipeline_worker(
                 )
 
             else:
+
                 ai_decision = (
                     "[AI-INFO]: "
                     "Simulation deployment thread active."
                 )
 
-        # Extract clean text for human eyes
-        # and scrub local model 'response' envelopes safely.
-        clean_human_text = ai_decision
+        # =========================================================================
+        # OUTPUT SEPARATION
+        # =========================================================================
+        #
+        # Channel 2 använder den strukturerade payload som AI:n producerar.
+        #
+        # action/text är en del av den befintliga adapter-payloaden och
+        # ska därför inte filtreras bort eller tolkas om här.
+        #
+        # Rå AI-output får däremot inte samtidigt läcka till Channel 1.
+        # =========================================================================
+
+        clean_human_text = ""
+        channel2_payload = None
+        is_channel2_action = False
 
         if (
-            ai_decision.strip().startswith("{")
+            isinstance(ai_decision, str)
+            and ai_decision.strip().startswith("{")
             and ai_decision.strip().endswith("}")
         ):
+
             try:
+
                 parsed_json = json.loads(
                     ai_decision
                 )
 
-                clean_human_text = parsed_json.get(
-                    "response",
-                    parsed_json.get(
-                        "text",
-                        parsed_json.get(
-                            "command",
-                            ai_decision
+                if isinstance(parsed_json, dict):
+
+                    # En strukturerad JSON-payload med action är
+                    # maskindata för Channel 2.
+                    #
+                    # Payloaden lämnas intakt så att adaptern får
+                    # översätta den till målmiljöns format.
+
+                    if (
+                        isinstance(
+                            parsed_json.get("action"),
+                            str
                         )
-                    )
+                        and parsed_json.get("action").strip()
+                    ):
+
+                        is_channel2_action = True
+                        channel2_payload = parsed_json
+
+                    # JSON utan action behandlas inte som Channel 2-action.
+                    # Eventuell human-readable response kan visas i Channel 1.
+
+                    else:
+
+                        human_response = parsed_json.get(
+                            "response",
+                            parsed_json.get(
+                                "text",
+                                ""
+                            )
+                        )
+
+                        if isinstance(
+                            human_response,
+                            str
+                        ):
+
+                            clean_human_text = (
+                                human_response.strip()
+                            )
+
+                        elif human_response is not None:
+
+                            clean_human_text = str(
+                                human_response
+                            ).strip()
+
+            except (
+                json.JSONDecodeError,
+                TypeError,
+                AttributeError
+            ):
+
+                # Ogiltig JSON ska inte skickas som maskinpayload.
+                clean_human_text = ""
+
+        else:
+
+            # Vanlig AI-text går fortsatt till Channel 1.
+
+            clean_human_text = (
+                ai_decision
+                if isinstance(
+                    ai_decision,
+                    str
                 )
+                else str(ai_decision)
+            )
 
-            except Exception:
-                pass
+        # =========================================================================
+        # CHANNEL 1
+        # =========================================================================
 
-        # ORIGINAL-FLÖDE ÅTERSTÄLLT:
-        # Inga hårda villkor eller dämpningar i routern.
         if (
-            router_instance.matrix
+            not is_channel2_action
+            and router_instance.matrix
             and router_instance.matrix.should_route_to_chat()
+            and clean_human_text
         ):
+
             if router_instance.io_layer:
+
                 router_instance.io_layer.send_to_kanal_1(
                     "AI (Channel 1)",
                     clean_human_text
                 )
 
             else:
+
                 gui_log_callback(
                     "AI (Channel 1)",
                     clean_human_text
                 )
 
-        # Dispatch to Voice Synth
-        # Using clean human text.
-        speech_callback(
-            clean_human_text
-        )
+        # =========================================================================
+        # VOICE
+        # =========================================================================
 
-        # Dispatch to Channel 2
-        # Dynamic Target Application Interface
-        # via exact raw JSON vectors.
         if (
-            router_instance.matrix
+            not is_channel2_action
+            and clean_human_text
+        ):
+
+            speech_callback(
+                clean_human_text
+            )
+
+        # =========================================================================
+        # CHANNEL 2
+        # =========================================================================
+        #
+        # Channel 2 får endast den strukturerade payloaden.
+        #
+        # Rå ai_decision skickas aldrig direkt till Channel 2.
+        #
+        # Payloadens innehåll lämnas till adaptern.
+        # Adaptern ansvarar för översättning till målmiljöns format.
+        # =========================================================================
+
+        if (
+            channel2_payload is not None
+            and router_instance.matrix
             and router_instance.matrix.should_route_to_adapter(
                 active_adapter
             )
-            and "[AI-API-ERROR]" not in ai_decision
         ):
+
             gui_log_callback(
                 "AI -> CHANNEL 2",
                 "Dispatching verified action payload "
@@ -332,20 +435,24 @@ def function_pipeline_worker(
             )
 
             if router_instance.io_layer:
+
                 router_instance.io_layer.send_to_kanal_2(
-                    ai_decision
+                    channel2_payload
                 )
 
             else:
+
                 active_adapter.execute_interaction(
-                    ai_decision
+                    channel2_payload
                 )
 
     except Exception as e:
+
         print(
             "[COGNITIVE-ROUTER-ERROR] "
             f"Pipeline broken down: {e}"
         )
 
     finally:
+
         ui_status_callback("READY")

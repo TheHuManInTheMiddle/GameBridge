@@ -219,19 +219,6 @@ class GameBridgeCore:
             )
             self.gui.internet_toggle.set(initial_state)
 
-        if self.telemetry_worker:
-            self.telemetry_worker.start_polling_worker(
-                current_adapter_callback=lambda:
-                    self.active_adapter_instance,
-                success_ui_callback=lambda data:
-                    self.gui.append_log(
-                        "TELEMETRY",
-                        str(data)
-                    )
-                    if self.gui
-                    else print(data)
-            )
-
     def update_internet_capability(self, enabled: bool):
         """Transactional setter invoked by UI event queue to flip internet capability state."""
         self.internet_ai_enabled = enabled

@@ -7,9 +7,9 @@ KOPPLINGAR:
      - core.path_core.py
      - functions/bridge_functions.py
      - interface/client_gui.py
-     - core/io_layer.py
-     - core/session_manager.py
-     - core/channel_matrix.py
+     - core.io_layer.py
+     - core.session_manager.py
+     - core.channel_matrix.py
      - interface/voice_core.py
      - core/localization_core.py
      - core/telemetry_core.py
@@ -47,7 +47,10 @@ _PROJECT_ROOT = os.path.dirname(
 
 # Säkerställ att projektets rot alltid finns i Python-sökvägen.
 if _PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, _PROJECT_ROOT)
+    sys.path.insert(
+        0,
+        _PROJECT_ROOT
+    )
 
 
 # ============================================================================
@@ -176,13 +179,12 @@ from core.telemetry_core import TelemetryCore
 # ============================================================================
 
 def main():
+
     # Production platform baseline v3.5.0
-    print    # Ersätt rad 3465:
     print(
         "=== G.A.M.E. B.R.I.D.G.E. "
         "v1.1.0 PLATFORM PRODUCTION RELEASE ==="
     )
-
 
     print(
         "[SYSTEM] Application successfully anchored "
@@ -251,6 +253,42 @@ def main():
 
     core.link_gui(gui)
 
+    # Channel 2 diagnostic monitor.
+    # Channel 2 traffic is displayed here only when
+    # the monitor panel is enabled by the GUI.
+    io_layer.register_monitor_channel(
+        gui.chat_window.append_monitor_message
+    )
+
+    # ------------------------------------------------------------------------
+    # Permanent telemetry worker
+    # ------------------------------------------------------------------------
+    # Telemetry-workern startas EN gång per GameBridge-session.
+    # GUI och plugins ska endast pausa/återuppta polling.
+    # Worker-livscykeln ägs av backend och avslutas via clean shutdown.
+
+    def get_active_adapter():
+        return getattr(
+            core,
+            "active_adapter_instance",
+            None
+        )
+
+    def telemetry_success_callback(data):
+
+        if (
+            hasattr(gui, "chat_window")
+            and gui.monitor_switch.get() == 1
+        ):
+            gui.chat_window.append_monitor_message(
+                str(data)
+            )
+
+    telemetry_worker.start_polling_worker(
+        current_adapter_callback=get_active_adapter,
+        success_ui_callback=telemetry_success_callback,
+    )
+
     # Fire off hardware keyboard vectors and voice confirmation
     # strictly ONCE here.
     core.boot_platform_loops()
@@ -278,27 +316,56 @@ def main():
             "[SYSTEM-NOTIFY] "
             f"Application lifecycle safely terminated: {exc}"
         )
-    finally:
-        # PUNKTERING 1 & 2: Kirurgisk shutdown av core och arbetartrådar
-        print("[SYSTEM] Initiating clean sub-core and worker shutdown sequence...")
-        
-        # Stoppar bridge_functions.py loopar (Hårdvaruhotkeys m.m.)
-        core.running = False
-        
-        # Kontrollerad stängning av asynkron telemetritråd
-        if hasattr(telemetry_worker, 'running'):
-            telemetry_worker.running = False
-        telemetry_worker.set_loop_state(False)
 
-        # PUTS & POLISH: Tysta "invalid command name" (after-scripts) vid stängning
+    finally:
+
+        # PUNKTERING 1 & 2:
+        # Kirurgisk shutdown av core och arbetartrådar.
+        print(
+            "[SYSTEM] Initiating clean sub-core and "
+            "worker shutdown sequence..."
+        )
+
+        # Stoppar bridge_functions.py loopar
+        # (hårdvaruhotkeys m.m.).
+        core.running = False
+
+        # Kontrollerad stängning av asynkron telemetritråd.
+        if hasattr(
+            telemetry_worker,
+            "running"
+        ):
+            telemetry_worker.running = False
+
+        telemetry_worker.set_loop_state(
+            False
+        )
+
+        # PUTS & POLISH:
+        # Tysta "invalid command name" (after-scripts)
+        # vid stängning.
         try:
-            if 'gui' in locals() and gui:
-                # Rensar bort alla schemalagda after-events som ligger och väntar i kön
-                for after_id in gui.eval('after info').split():
-                    gui.after_cancel(after_id)
+
+            if (
+                "gui" in locals()
+                and gui
+            ):
+
+                # Rensar bort alla schemalagda
+                # after-events som ligger och väntar i kön.
+                for after_id in gui.eval(
+                    "after info"
+                ).split():
+
+                    gui.after_cancel(
+                        after_id
+                    )
+
                 gui.quit()
+
         except Exception:
             pass
+
 
 # ============================================================================
 # 5. DIRECT EXECUTION
