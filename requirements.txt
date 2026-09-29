@@ -1,0 +1,8 @@
+customtkinter==6.0.0
+keyboard==0.13.5
+ollama==0.6.2
+Pillow==12.3.0
+pyautogui==0.9.54
+pyttsx3==2.99
+speechrecognition==3.17.0
+tkinterweb==4.25.3
