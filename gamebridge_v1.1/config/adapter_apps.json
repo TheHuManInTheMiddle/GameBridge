@@ -1,0 +1,11 @@
+{
+    "extensions": [
+        ".exe",
+        ".py",
+        ".bat",
+        ".cmd",
+        ".ps1",
+        ".jar"
+    ],
+    "description": "Supported target application file types"
+}

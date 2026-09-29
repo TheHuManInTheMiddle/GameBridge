@@ -1,0 +1,130 @@
+{
+"en": {
+"title": "G.A.M.E. B.R.I.D.G.E.",
+"status": "Status",
+"ai_toggle": "AI Active",
+"internet_toggle": "Internet AI",
+"memory_toggle": "Memory",
+
+    "matrix_user_channels": "USER CHANNELS",
+    "matrix_voice": "VOICE",
+    "matrix_ai_channels": "AI CHANNELS",
+
+    "chat_user_switch": "Channel 1",
+    "chat_ai_switch": "Channel 1",
+
+    "voice_label": "Voice Mode:",
+    "voice_user_label": "Voice",
+    "voice_ai_label": "Voice",
+    "voice_modes": [
+        "OFF",
+        "PTT",
+        "LISTEN"
+    ],
+
+    "telemetry_switch": "Telemetry",
+    "write_switch": "Channel 2",
+
+    "boot_btn": "Launch / Attach App",
+    "disconnect_btn": "Disconnect",
+    "no_adapter": "No Adapter Loaded",
+
+    "input_placeholder": "Type message...",
+    "send_btn": "Send",
+
+    "topmost_toggle": "Stay on Top",
+    "text_size_label": "Text Size",
+    "text_color_label": "Text Color",
+    "monitor_label": "Monitor",
+
+    "settings_btn": "Settings",
+    "reset_btn": "Reset",
+    
+    "channel2_monitor_switch": "Monitor Channel 2",
+    "telemetry_monitor_switch": "Monitor Telemetry",
+
+    "duplicate_plugin_title": "Duplicate plugin detected",
+
+    "log_ai_on": "AI infrastructure DEPLOYED.",
+    "log_ai_off": "AI infrastructure SUSPENDED.",
+    "log_tel_on": "Telemetry gathering ENABLED.",
+    "log_tel_off": "Telemetry gathering DISABLED.",
+
+    "icon_status_indicator": "●",
+    "icon_voice_mode_off": "  🔇 ",
+    "icon_voice_mode_ptt": "✋🎙️",
+    "icon_voice_mode_persistent": "  🎙️ ",
+    "icon_tgblock_locked": "⌨️🔒",
+    "icon_tgblock_unlocked": "⌨️🔓",
+    "icon_ptt_hotkey_capture": "⌨️⏳",
+    "icon_ptt_hotkey": "✋🎙️",
+    "icon_text_size": "🔍",
+    "icon_text_color": "●",
+    "icon_monitor": "●"
+},
+
+"sv": {
+    "title": "G.A.M.E. B.R.I.D.G.E.",
+    "status": "Status",
+    "ai_toggle": "AI Aktiv",
+    "internet_toggle": "Internet-AI",
+    "memory_toggle": "Minne",
+
+    "matrix_user_channels": "ANVÄNDARKANALER",
+    "matrix_voice": "RÖST",
+    "matrix_ai_channels": "AI-KANALER",
+
+    "chat_user_switch": "Kanal 1",
+    "chat_ai_switch": "Kanal 1",
+
+    "voice_label": "Röstläge:",
+    "voice_user_label": "Röst",
+    "voice_ai_label": "Röst",
+    "voice_modes": [
+        "AV",
+        "PTT",
+        "LYSSNA"
+    ],
+
+    "telemetry_switch": "Telemetri",
+    "write_switch": "Kanal 2",
+
+    "boot_btn": "Starta / Anslut app",
+    "disconnect_btn": "Koppla från",
+    "no_adapter": "Ingen adapter laddad",
+
+    "input_placeholder": "Skriv meddelande...",
+    "send_btn": "Skicka",
+
+    "topmost_toggle": "Alltid överst",
+    "text_size_label": "Textstorlek",
+    "text_color_label": "Textfärg",
+    "monitor_label": "Monitor",
+
+    "settings_btn": "Inställningar",
+    "reset_btn": "Återställ",
+
+    "channel2_monitor_switch": "Monitor Kanal 2",
+    "telemetry_monitor_switch": "Monitor Telemetri",
+
+    "duplicate_plugin_title": "Dubblett-plugin upptäckt",
+
+    "log_ai_on": "AI-infrastruktur AKTIVERAD.",
+    "log_ai_off": "AI-infrastruktur AVSTÄNGD.",
+    "log_tel_on": "Telemetriläsning AKTIVERAD.",
+    "log_tel_off": "Telemetriläsning DEAKTIVERAD.",
+
+    "icon_status_indicator": "●",
+    "icon_voice_mode_off": "  🔇 ",
+    "icon_voice_mode_ptt": "✋🎙️",
+    "icon_voice_mode_persistent": "  🎙️ ",
+    "icon_tgblock_locked": "⌨️🔒",
+    "icon_tgblock_unlocked": "⌨️🔓",
+    "icon_ptt_hotkey_capture": "⌨️⏳",
+    "icon_ptt_hotkey": "✋🎙️",
+    "icon_text_size": "🔍",
+    "icon_text_color": "●",
+    "icon_monitor": "●"
+}
+
+}
