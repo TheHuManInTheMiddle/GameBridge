@@ -68,6 +68,19 @@ class PathCore:
         )
 
     # ------------------------------------------------------------------
+    # PYTHON IMPORT ROOT
+    # ------------------------------------------------------------------
+
+    # Säkerställer att projektroten även används som Python-importväg.
+    # Detta behövs för dynamisk import av externa runtime-mappar som
+    # providers/ när GameBridge körs som PyInstaller .exe.
+    if PROJECT_ROOT not in sys.path:
+        sys.path.insert(
+            0,
+            PROJECT_ROOT
+        )
+
+    # ------------------------------------------------------------------
     # GENERELL SÖKVÄG
     # ------------------------------------------------------------------
 

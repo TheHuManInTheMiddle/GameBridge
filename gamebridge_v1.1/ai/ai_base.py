@@ -35,7 +35,6 @@ import json
 
 from core.time_core import TimeCore
 
-
 class AIBase:
     """
     GameBridge-owned AI runtime contract.

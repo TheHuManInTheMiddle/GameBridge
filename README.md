@@ -67,6 +67,9 @@ This makes the core middleware independent of any individual application.
 
 The same GameBridge infrastructure can therefore be used with different applications without turning those applications into dependencies of the core system.
 
+**Explore the available plugins and adapters:**
+[**GameBridge Plugins →**](https://github.com/TheHuManInTheMiddle/GameBridge-Plugins)
+
 ## Local by design
 
 GameBridge is designed around local AI and local application interaction.
@@ -95,22 +98,52 @@ This README describes the idea and purpose of GameBridge rather than serving as 
 
 ## My Perspective (the real READ  ME)
 
-I use a cross-platform AI methodology where the human remains responsible for the direction of the work and AI is used as an augmentation tool.
+I use a **cross-platform AI methodology**, working across multiple AI platforms and tools and using each where it adds value.
 
-My workflow is human-led and AI-augmented.
+**My workflow is human-led and AI-augmented.** I use AI and other tools for ideas, research, coding, testing, documentation, visual work, or whatever a project requires.
 
-GameBridge is one part of a larger ecosystem of experiments around local AI, software, interaction, and open source.
+My methodology demonstrates that meaningful development is possible using **unpaid AI tools**. Paid tools are neither required nor excluded.
 
-The projects I publish are examples of things I wanted to build and explore. They are not prescriptions for how software or AI development should be done.
+**My projects are examples of what I have been able to create from this perspective, not a prescription for how others should work.**
 
-Open source is part of that process: ideas become more useful when other people can inspect them, experiment with them, change them, or simply take inspiration from them.
+I release my projects as **open source as part of my ecosystem**, making them and their development approach available for others to explore, use, learn from, or develop further. Open source is part of my ecosystem, not a requirement for anyone else using or building upon my work.
 
-The goal is not to make everyone work the same way.
+Just as importantly, I want this approach to encourage people to **try their own creativity without feeling pressured to achieve a particular result**. You might want to write code, paint, make music, build something, or simply experiment. If it is interesting and enjoyable, that can be reason enough to start.
 
-It is to make it easier to explore what is possible.
+**The purpose is not to prescribe a way of working, but to demonstrate what was made possible from this perspective.**
 
-## License
+---
 
-GameBridge is released under the MIT License.
+## 📄 License
 
-See the `LICENSE` file for the full license text.
+This project is licensed under the MIT License.
+
+**A note about the project:**
+Open source is part of my ecosystem. This project is shared openly so that others can use it, inspect it, modify it, learn from it, and build upon it.
+
+**A note about the methodology:**
+This project is an example of what I have created from my own perspective and methodology. You are free to use it in your own way; my approach is not a requirement for using or building upon this project.
+
+The full MIT License is reproduced below:
+
+```text
+Copyright (c) 2026 TheHuManInTheMiddle
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```

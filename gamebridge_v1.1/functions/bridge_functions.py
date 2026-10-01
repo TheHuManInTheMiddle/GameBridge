@@ -296,6 +296,15 @@ class GameBridgeCore:
             return None
 
         try:
+            # External providers/ must remain discoverable at runtime
+            # when GameBridge is running as a frozen executable.
+            # The providers package lives beside the executable, so
+            # its parent (PROJECT_ROOT) must be on sys.path.
+            project_root = PathCore.PROJECT_ROOT
+
+            if project_root not in sys.path:
+                sys.path.insert(0, project_root)
+
             provider = importlib.import_module(
                 f"providers.{provider_name}_ai"
             )
@@ -379,7 +388,29 @@ class GameBridgeCore:
             self.gui.append_log("SYSTEM", log_msg)
 
     def start_ai_runtime(self):
-        """Checks the AI/model state through the AI lifecycle boundary."""
+        """Activates the AI runtime and dynamically binds a client when AI was OFF at startup."""
+
+        if self.ai_client is None:
+            self.ai_client = self._create_ai_client()
+
+            if self.ai_client is None:
+                return "DISABLED"
+
+            self.ai_client.set_runtime_state_callback(
+                self.runtime_state.get_all_states
+            )
+
+            if self.telemetry_worker is not None:
+                self.ai_client.set_telemetry_request_callback(
+                    self.telemetry_worker.request_telemetry
+                )
+
+            if self.ai_lifecycle:
+                self.ai_lifecycle.ai_client = self.ai_client
+
+            if self.cognitive_router:
+                self.cognitive_router.ai_client = self.ai_client
+
         if self.ai_lifecycle:
             return self.ai_lifecycle.start_ai()
 

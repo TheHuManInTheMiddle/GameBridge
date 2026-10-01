@@ -10,10 +10,15 @@ import importlib
 import threading
 import time
 
+from core.path_core import PathCore
+
 
 class ModelMonitorCore:
     def __init__(self):
         self._lock = threading.Lock()
+
+    def _write_debug_log(self, message):
+        """Write diagnostic information to a file beside the application."""
 
     def _get_provider(self, provider_name):
         """Load the selected AI provider module."""
@@ -26,7 +31,15 @@ class ModelMonitorCore:
                 f"providers.{provider_name}_ai"
             )
 
-        except Exception:
+        except Exception as e:
+            message = (
+                f"[MODEL-MONITOR] Failed to load provider "
+                f"'{provider_name}': {e}"
+            )
+
+            print(message)
+            self._write_debug_log(message)
+
             return None
 
     def fetch_installed_models(self, provider_name) -> list:
@@ -40,9 +53,15 @@ class ModelMonitorCore:
         try:
             return provider.get_installed_models()
 
-        except Exception:
-            # Even if the selected provider is unavailable,
-            # the GUI must still provide a valid neutral model state.
+        except Exception as e:
+            message = (
+                f"[MODEL-MONITOR] Failed to fetch installed models "
+                f"from provider '{provider_name}': {e}"
+            )
+
+            print(message)
+            self._write_debug_log(message)
+
             return ["None"]
 
     def start_lamp_monitor(
@@ -119,7 +138,14 @@ class ModelMonitorCore:
                     else:
                         update_lamp_ui_callback("#EF4444")
 
-                except Exception:
+                except Exception as e:
+                    message = (
+                        f"[MODEL-MONITOR] Lamp monitor error: {e}"
+                    )
+
+                    print(message)
+                    self._write_debug_log(message)
+
                     break
 
                 time.sleep(3)

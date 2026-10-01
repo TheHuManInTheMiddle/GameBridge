@@ -496,7 +496,9 @@ def function_pipeline_worker(
 
             clean_human_text = ""
             channel2_payload = None
+            telemetry_request = None
             is_channel2_action = False
+            is_telemetry_request = False
 
             if (
                 isinstance(ai_decision, str)
@@ -512,10 +514,38 @@ def function_pipeline_worker(
 
                     if isinstance(parsed_json, dict):
 
-                        # En strukturerad JSON-payload med action är
-                        # maskindata för Channel 2.
+                        # ---------------------------------------------------------
+                        # TELEMETRY REQUEST
+                        # ---------------------------------------------------------
+                        #
+                        # Provider-neutral GameBridge request.
+                        #
+                        # Ollama provider returns the semantic tool request
+                        # without executing it. GameBridge executes the
+                        # fallback tool here and returns a receipt through
+                        # continue_runtime().
+                        # ---------------------------------------------------------
 
                         if (
+                            parsed_json.get("tool")
+                            == (
+                                getattr(
+                                    router_instance.ai_client,
+                                    "TOOL_TELEMETRY",
+                                    "gamebridge_telemetry"
+                                )
+                            )
+                        ):
+
+                            is_telemetry_request = True
+
+                            telemetry_request = parsed_json
+
+                        # ---------------------------------------------------------
+                        # CHANNEL 2 ACTION
+                        # ---------------------------------------------------------
+
+                        elif (
                             isinstance(
                                 parsed_json.get("action"),
                                 str
@@ -579,6 +609,7 @@ def function_pipeline_worker(
 
             if (
                 not is_channel2_action
+                and not is_telemetry_request
                 and clean_human_text
             ):
 
@@ -594,12 +625,71 @@ def function_pipeline_worker(
 
             if (
                 not is_channel2_action
+                and not is_telemetry_request
                 and clean_human_text
             ):
 
                 speech_callback(
                     clean_human_text
                 )
+
+            # =====================================================================
+            # TELEMETRY
+            # =====================================================================
+
+            telemetry_receipt = None
+
+            if (
+                is_telemetry_request
+                and router_instance.ai_client
+                and hasattr(
+                    router_instance.ai_client,
+                    "execute_gamebridge_tool"
+                )
+            ):
+
+                print(
+                    "[AI-RUNTIME] GameBridge telemetry fallback "
+                    "executing requested read."
+                )
+
+                try:
+
+                    telemetry_data = (
+                        router_instance.ai_client
+                        .execute_gamebridge_tool(
+                            router_instance.ai_client.TOOL_TELEMETRY,
+                            telemetry_request.get(
+                                "arguments",
+                                {}
+                            )
+                        )
+                    )
+
+                    if telemetry_data is None:
+
+                        telemetry_data = {
+                            "status": "unavailable"
+                        }
+
+                    telemetry_receipt = {
+                        "status": "completed",
+                        "step": "telemetry",
+                        "data": telemetry_data
+                    }
+
+                except Exception as e:
+
+                    print(
+                        "[COGNITIVE-ROUTER-ERROR] "
+                        "Telemetry execution failed: "
+                        f"{e}"
+                    )
+
+                    telemetry_receipt = {
+                        "status": "failed",
+                        "step": "telemetry"
+                    }
 
             # =====================================================================
             # CHANNEL 2
@@ -650,6 +740,9 @@ def function_pipeline_worker(
             # Channel 2:
             #   GameBridge returns its dispatch receipt.
             #
+            # Telemetry:
+            #   GameBridge returns its completed read receipt.
+            #
             # Other steps:
             #   Preserve the existing completion behaviour.
             #
@@ -665,7 +758,16 @@ def function_pipeline_worker(
                 )
             ):
 
-                if channel2_receipt is not None:
+                if telemetry_receipt is not None:
+
+                    ai_decision = (
+                        router_instance.ai_client
+                        .continue_runtime(
+                            completion=telemetry_receipt
+                        )
+                    )
+
+                elif channel2_receipt is not None:
 
                     ai_decision = (
                         router_instance.ai_client

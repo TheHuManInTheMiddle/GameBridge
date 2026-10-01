@@ -1,12 +1,10 @@
 {
-    "ai_model_name": "qwen3.5-4b-gamebridge:latest",
+    "ai_model_name": "none",
+    "ai_provider": "none",
     "voice_hotkey": "f12",
     "chat_text_color": "#FFFFFF",
-    "system_language": "sv",
-    "internet_provider": "tavily",
-    "tts_provider": "system",
-    "tts_voice": "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Speech\\Voices\\Tokens\\TTS_MS_EN-US_ZIRA_11.0",
-    "ai_provider": "ollama",
-    "channel2_monitor_active": false,
-    "telemetry_monitor_active": false
+    "system_language": "en",
+    "internet_provider": "none",
+    "tts_provider": "none",
+    "tts_voice": "none"
 }

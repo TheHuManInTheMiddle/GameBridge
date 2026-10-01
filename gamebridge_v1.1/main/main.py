@@ -240,7 +240,7 @@ def main():
     # Ingen polling startas här.
     # AI måste uttryckligen begära telemetry för att en läsning ska ske.
 
-    if hasattr(core, "ai_client"):
+    if core.ai_client is not None:
 
         core.ai_client.set_telemetry_request_callback(
             telemetry_worker.request_telemetry

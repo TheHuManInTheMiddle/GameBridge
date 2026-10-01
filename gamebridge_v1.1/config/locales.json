@@ -38,6 +38,7 @@
     "monitor_label": "Monitor",
 
     "settings_btn": "Settings",
+    "close_btn": "Close",
     "reset_btn": "Reset",
     
     "channel2_monitor_switch": "Monitor Channel 2",
@@ -102,6 +103,7 @@
     "monitor_label": "Monitor",
 
     "settings_btn": "Inställningar",
+    "close_btn": "Stäng",
     "reset_btn": "Återställ",
 
     "channel2_monitor_switch": "Monitor Kanal 2",

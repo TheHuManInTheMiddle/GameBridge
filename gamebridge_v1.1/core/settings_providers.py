@@ -10,28 +10,29 @@ import importlib
 import json
 import os
 
+from core.path_core import PathCore
+
 
 def _get_locales_path():
     """Return the path to the GameBridge locale configuration."""
-    return os.path.join(
-        os.path.dirname(os.path.dirname(__file__)),
-        "config",
-        "locales.json",
+    return PathCore.get_config_path(
+        "locales.json"
     )
 
 
 def _get_providers_path():
     """Return the path to the GameBridge provider directory."""
-    return os.path.join(
-        os.path.dirname(os.path.dirname(__file__)),
-        "providers",
-    )
+    return PathCore.get_provider_root()
 
 
 def get_supported_languages():
     """Return language codes defined in config/locales.json."""
     try:
-        with open(_get_locales_path(), "r", encoding="utf-8") as file:
+        with open(
+            _get_locales_path(),
+            "r",
+            encoding="utf-8"
+        ) as file:
             locales = json.load(file)
 
         if not isinstance(locales, dict):
@@ -75,7 +76,10 @@ def get_available_voices(provider):
 
     try:
         module_name = f"providers.{provider}_tts"
-        module = importlib.import_module(module_name)
+
+        module = importlib.import_module(
+            module_name
+        )
 
         get_voices = getattr(
             module,
@@ -93,7 +97,11 @@ def get_available_voices(provider):
 
         return voices
 
-    except (ImportError, AttributeError, OSError):
+    except (
+        ImportError,
+        AttributeError,
+        OSError
+    ):
         return []
 
 

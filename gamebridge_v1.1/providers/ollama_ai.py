@@ -21,8 +21,6 @@ import os
 import urllib.request
 import urllib.error
 
-import ollama
-
 from core.path_core import PathCore
 from ai.ai_base import AIBase
 
@@ -38,17 +36,36 @@ def get_installed_models():
     """Return models installed in the local Ollama instance."""
 
     try:
-        model_list_data = ollama.list()
+        req = urllib.request.Request(
+            "http://localhost:11434/api/tags",
+            headers={
+                "Content-Type": "application/json"
+            },
+            method="GET",
+        )
+
+        with urllib.request.urlopen(
+            req,
+            timeout=5,
+        ) as response:
+
+            data = json.loads(
+                response.read().decode("utf-8")
+            )
 
         models = [
-            model["model"]
-            for model in model_list_data.get("models", [])
-            if model.get("model")
+            model["name"]
+            for model in data.get("models", [])
+            if model.get("name")
         ]
 
         return ["None"] + models
 
-    except Exception:
+    except Exception as e:
+        print(
+            "[OLLAMA-DISCOVERY] Failed to fetch installed models: "
+            f"{e}"
+        )
         return ["None"]
 
 
@@ -253,7 +270,7 @@ class OllamaClient(AIBase):
 
     # ==================================================================
     # OLLAMA RUNTIME STEP COMPLETION
-    # ==================================================================
+    # ======================================================================
 
     def _build_step_completion(
         self,
@@ -630,53 +647,21 @@ class OllamaClient(AIBase):
                             "by cognitive runtime."
                         )
 
-                        try:
-
-                            telemetry_data = (
-                                self.execute_gamebridge_tool(
-                                    function_name,
-                                    arguments,
-                                )
-                            )
-
-                        except Exception as e:
-
-                            print(
-                                "[AI-RUNTIME] Telemetry request "
-                                f"failed: {e}"
-                            )
-
-                            telemetry_data = {
-                                "status": "unavailable"
-                            }
-
-                        if telemetry_data is None:
-
-                            telemetry_data = {
-                                "status": "unavailable"
-                            }
-
-                        self.runtime_messages.append(
-                            {
-                                "role": "tool",
-                                "tool_call_id": tool_call_id,
-                                "content": json.dumps(
-                                    telemetry_data,
-                                    ensure_ascii=False,
-                                ),
-                            }
+                        self.runtime_last_tool_call_id = (
+                            tool_call_id
                         )
 
-                        self.runtime_context[
-                            "telemetry_data"
-                        ] = telemetry_data
-
-                        self.runtime_last_tool_call_id = None
                         self.runtime_last_step_type = (
                             "telemetry"
                         )
 
-                        return self._request_runtime_step()
+                        return json.dumps(
+                            {
+                                "tool": self.TOOL_TELEMETRY,
+                                "arguments": arguments,
+                            },
+                            ensure_ascii=False,
+                        )
 
                     # --------------------------------------------------
                     # CHANNEL 2 / APPLICATION TOOL

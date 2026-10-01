@@ -4,10 +4,10 @@ KOPPLINGAR:
 - HÄMTAR FRÅN: Isolerade UI-händelser (Inga interna importberoenden mot presentation).
 - ANROPAS AV: interface/client_gui.py
 """
+
 import json
-import os
-import re
 import threading
+
 from functions.internet_functions import function_open_browser_link
 
 
@@ -182,7 +182,9 @@ def function_on_model_change(gui_instance, selected_model):
     gui_instance.append_log("SYSTEM", f"Model changed to: {selected_model}")
 
     if gui_instance.core_hub and hasattr(gui_instance.core_hub, "ai_client"):
-        gui_instance.core_hub.ai_client.model_name = selected_model
+        if gui_instance.core_hub.ai_client is not None:
+            gui_instance.core_hub.ai_client.model_name = selected_model
+
         gui_instance.core_hub.global_config["ai_model_name"] = selected_model
 
         try:
@@ -263,10 +265,6 @@ def function_trigger_text_input(gui_instance):
     )
 
     gui_instance.append_log(sender_tag, text)
-
-    # RELEASE REPLACEMENT:
-    # if gui_instance.chat_switch.get() == 0:
-    #     pass
 
     if gui_instance.core_hub:
         threading.Thread(

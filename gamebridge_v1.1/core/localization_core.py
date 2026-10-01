@@ -101,6 +101,7 @@ class LocalizationCore:
 
                 "settings_btn": "Settings",
                 "reset_btn": "Reset",
+                "close_btn": "Close",
 
                 "duplicate_plugin_title": "Duplicate plugin detected"
             },
@@ -172,6 +173,7 @@ class LocalizationCore:
 
                 "settings_btn": "Inställningar",
                 "reset_btn": "Återställ",
+                "close_btn": "Stäng",
 
                 "duplicate_plugin_title": "Dubblettplugin upptäckt"
             }

@@ -348,7 +348,20 @@ class SettingsWindow(ctk.CTkToplevel):
         ai_provider_values = get_ai_providers()
 
         if not ai_provider_values:
-            ai_provider_values = ["none"]
+            ai_provider_values = []
+
+        if "none" in ai_provider_values:
+            ai_provider_values = [
+                "none"
+            ] + [
+                provider
+                for provider in ai_provider_values
+                if provider != "none"
+            ]
+        else:
+            ai_provider_values = [
+                "none"
+            ] + ai_provider_values
 
         self.ai_provider_selector = ctk.CTkOptionMenu(
             frame,
@@ -407,7 +420,20 @@ class SettingsWindow(ctk.CTkToplevel):
         internet_provider_values = get_internet_providers()
 
         if not internet_provider_values:
-            internet_provider_values = ["Not configured"]
+            internet_provider_values = []
+
+        if "none" in internet_provider_values:
+            internet_provider_values = [
+                "none"
+            ] + [
+                provider
+                for provider in internet_provider_values
+                if provider != "none"
+            ]
+        else:
+            internet_provider_values = [
+                "none"
+            ] + internet_provider_values
 
         self.internet_provider_selector = ctk.CTkOptionMenu(
             frame,
@@ -461,7 +487,20 @@ class SettingsWindow(ctk.CTkToplevel):
         tts_provider_values = get_tts_providers()
 
         if not tts_provider_values:
-            tts_provider_values = ["none"]
+            tts_provider_values = []
+
+        if "none" in tts_provider_values:
+            tts_provider_values = [
+                "none"
+            ] + [
+                provider
+                for provider in tts_provider_values
+                if provider != "none"
+            ]
+        else:
+            tts_provider_values = [
+                "none"
+            ] + tts_provider_values
 
         self.tts_provider_selector = ctk.CTkOptionMenu(
             frame,
@@ -671,9 +710,16 @@ class SettingsWindow(ctk.CTkToplevel):
         # CLOSE
         # ------------------------------------------------------
 
+        close_label = "Close"
+
+        if self.localizer:
+            close_label = self.localizer.get_text(
+                "close_btn"
+            )
+
         self.close_button = ctk.CTkButton(
             frame,
-            text="Close",
+            text=close_label,
             command=self.destroy,
             width=100,
         )
